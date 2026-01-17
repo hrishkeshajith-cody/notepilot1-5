@@ -27,6 +27,12 @@ export interface KeyTerm {
   example: string;
 }
 
+export interface ImportantQuestion {
+  question: string;
+  answer: string;
+  marks: 1 | 3 | 5;
+}
+
 export interface NoteSection {
   title: string;
   content: string;
@@ -54,6 +60,7 @@ export interface StudyPackData {
     instructions: string;
     questions: QuizQuestion[];
   };
+  important_questions?: ImportantQuestion[];
   mind_map?: MindMapData;
 }
 
