@@ -4,6 +4,7 @@ import { useAuth } from './useAuth';
 import { StudyPack, StudyPackData, UserInput } from '@/types';
 import { toast } from 'sonner';
 
+// Generation step type for progress tracking
 export type GenerationStep = 'idle' | 'extracting' | 'generating' | 'saving' | 'done';
 
 export function useStudyPacks() {
