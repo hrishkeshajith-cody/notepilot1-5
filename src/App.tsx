@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { LandingPage } from './components/LandingPage';
 import { AuthPage } from './components/AuthPage';
 import { Dashboard } from './components/Dashboard';
+import { Analytics } from '@vercel/analytics/react'; // ✅ Vercel Analytics
 
 const queryClient = new QueryClient();
 
@@ -45,9 +46,13 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <AppContent />
+
+        {/* ✅ REQUIRED for Vercel Analytics */}
+        <Analytics />
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
 
 export default App;
+
