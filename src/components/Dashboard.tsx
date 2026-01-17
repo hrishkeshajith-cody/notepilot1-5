@@ -16,7 +16,7 @@ type View = 'dashboard' | 'create' | 'study';
 
 export function Dashboard() {
   const { user, profile, signOut, updateProfile } = useAuth();
-  const { packs, loading, generating, generatePack, deletePack } = useStudyPacks();
+  const { packs, loading, generating, generationStep, generatePack, deletePack } = useStudyPacks();
   const [view, setView] = useState<View>('dashboard');
   const [activePack, setActivePack] = useState<StudyPack | null>(null);
   const [chatContext, setChatContext] = useState<string | undefined>();
@@ -47,6 +47,7 @@ export function Dashboard() {
           onBack={() => setView('dashboard')}
           onGenerate={handleGenerate}
           generating={generating}
+          generationStep={generationStep}
         />
       </div>
     );

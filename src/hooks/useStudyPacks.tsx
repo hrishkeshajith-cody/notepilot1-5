@@ -4,11 +4,14 @@ import { useAuth } from './useAuth';
 import { StudyPack, StudyPackData, UserInput } from '@/types';
 import { toast } from 'sonner';
 
+export type GenerationStep = 'idle' | 'extracting' | 'generating' | 'saving' | 'done';
+
 export function useStudyPacks() {
   const { user } = useAuth();
   const [packs, setPacks] = useState<StudyPack[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [generationStep, setGenerationStep] = useState<GenerationStep>('idle');
 
   useEffect(() => {
     if (user) {
@@ -65,12 +68,14 @@ export function useStudyPacks() {
     if (!user) return null;
 
     setGenerating(true);
+    setGenerationStep('idle');
 
     try {
       let extractedPdfText = '';
 
       // If there's a PDF, extract text first
       if (input.pdfFile) {
+        setGenerationStep('extracting');
         const reader = new FileReader();
         const pdfBase64 = await new Promise<string>((resolve, reject) => {
           reader.onload = () => {
@@ -82,8 +87,6 @@ export function useStudyPacks() {
           reader.readAsDataURL(input.pdfFile!);
         });
 
-        toast.info('Extracting text from PDF...');
-
         const { data: extractData, error: extractError } = await supabase.functions.invoke('extract-pdf', {
           body: { pdfBase64 },
         });
@@ -93,11 +96,10 @@ export function useStudyPacks() {
           toast.warning('Could not extract PDF text. Using any provided text content.');
         } else if (extractData?.text) {
           extractedPdfText = extractData.text;
-          toast.success('PDF text extracted successfully');
         }
       }
 
-      toast.info('Generating study pack with AI...');
+      setGenerationStep('generating');
 
       const { data, error } = await supabase.functions.invoke('generate-study-pack', {
         body: {
@@ -113,6 +115,8 @@ export function useStudyPacks() {
       if (error) throw error;
 
       const studyPackData = data as StudyPackData;
+
+      setGenerationStep('saving');
 
       // Save to database
       const insertData = {
@@ -145,6 +149,7 @@ export function useStudyPacks() {
         ...studyPackData,
       };
 
+      setGenerationStep('done');
       setPacks((prev) => [newPack, ...prev]);
       toast.success('Study pack generated successfully!');
 
@@ -155,6 +160,7 @@ export function useStudyPacks() {
       return null;
     } finally {
       setGenerating(false);
+      setGenerationStep('idle');
     }
   };
 
@@ -182,6 +188,7 @@ export function useStudyPacks() {
     packs,
     loading,
     generating,
+    generationStep,
     generatePack,
     deletePack,
     refetch: fetchPacks,
