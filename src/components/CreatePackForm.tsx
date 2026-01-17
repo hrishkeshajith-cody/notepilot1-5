@@ -1,24 +1,34 @@
 import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Upload, FileText, Loader2, Sparkles, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Upload, FileText, Loader2, Sparkles, AlertCircle, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Progress } from '@/components/ui/progress';
 import { UserInput } from '@/types';
+import { GenerationStep } from '@/hooks/useStudyPacks';
 import { toast } from 'sonner';
 
 interface CreatePackFormProps {
   onBack: () => void;
   onGenerate: (input: UserInput) => Promise<void>;
   generating: boolean;
+  generationStep: GenerationStep;
 }
 
 const grades = ['Elementary', 'Middle School', 'High School', 'College', 'Graduate', 'Professional'];
 const languages = ['English', 'Spanish', 'French', 'German', 'Chinese', 'Japanese', 'Korean', 'Hindi', 'Arabic', 'Portuguese'];
 
-export function CreatePackForm({ onBack, onGenerate, generating }: CreatePackFormProps) {
+const GENERATION_STEPS = [
+  { key: 'extracting', label: 'Extracting PDF text', progress: 25 },
+  { key: 'generating', label: 'Generating study materials', progress: 60 },
+  { key: 'saving', label: 'Saving to your library', progress: 90 },
+  { key: 'done', label: 'Complete!', progress: 100 },
+] as const;
+
+export function CreatePackForm({ onBack, onGenerate, generating, generationStep }: CreatePackFormProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState<UserInput>({
     grade: '',
@@ -255,23 +265,65 @@ export function CreatePackForm({ onBack, onGenerate, generating }: CreatePackFor
               </div>
             </div>
 
-            <Button
-              type="submit"
-              className="w-full gradient-primary text-primary-foreground shadow-glow py-6 text-lg"
-              disabled={generating}
-            >
-              {generating ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Generating... This may take a minute
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-5 h-5 mr-2" />
-                  Generate Study Pack
-                </>
-              )}
-            </Button>
+            {generating ? (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium">
+                      {GENERATION_STEPS.find(s => s.key === generationStep)?.label || 'Preparing...'}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {GENERATION_STEPS.find(s => s.key === generationStep)?.progress || 10}%
+                    </span>
+                  </div>
+                  <Progress 
+                    value={GENERATION_STEPS.find(s => s.key === generationStep)?.progress || 10} 
+                    className="h-2"
+                  />
+                </div>
+                
+                <div className="flex flex-wrap gap-2 justify-center">
+                  {GENERATION_STEPS.map((step, idx) => {
+                    const stepIndex = GENERATION_STEPS.findIndex(s => s.key === generationStep);
+                    const currentIdx = GENERATION_STEPS.findIndex(s => s.key === step.key);
+                    const isComplete = stepIndex > currentIdx;
+                    const isCurrent = step.key === generationStep;
+                    
+                    return (
+                      <motion.div
+                        key={step.key}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: idx * 0.1 }}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                          isComplete 
+                            ? 'bg-primary/20 text-primary' 
+                            : isCurrent 
+                              ? 'bg-primary text-primary-foreground animate-pulse' 
+                              : 'bg-muted text-muted-foreground'
+                        }`}
+                      >
+                        {isComplete ? (
+                          <Check className="w-3 h-3" />
+                        ) : isCurrent ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : null}
+                        {step.label.split(' ')[0]}
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <Button
+                type="submit"
+                className="w-full gradient-primary text-primary-foreground shadow-glow py-6 text-lg"
+                disabled={generating}
+              >
+                <Sparkles className="w-5 h-5 mr-2" />
+                Generate Study Pack
+              </Button>
+            )}
           </form>
         </motion.div>
       </main>
