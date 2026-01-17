@@ -42,11 +42,11 @@ const STUDY_PACK_TOOLS = [
               type: "object",
               properties: {
                 title: { type: "string" },
-                content: { type: "string", description: "Detailed explanation, 3-5 sentences" },
+                content: { type: "string", description: "Brief explanation, 2-3 sentences" },
               },
               required: ["title", "content"],
             },
-            description: "8-12 detailed note sections",
+            description: "5-8 note sections",
           },
           key_terms: {
             type: "array",
@@ -55,11 +55,10 @@ const STUDY_PACK_TOOLS = [
               properties: {
                 term: { type: "string" },
                 meaning: { type: "string" },
-                example: { type: "string" },
               },
-              required: ["term", "meaning", "example"],
+              required: ["term", "meaning"],
             },
-            description: "15-20 key terms with meanings and examples",
+            description: "10-15 key terms",
           },
           flashcards: {
             type: "array",
@@ -71,7 +70,7 @@ const STUDY_PACK_TOOLS = [
               },
               required: ["q", "a"],
             },
-            description: "15-20 flashcards for memorization",
+            description: "10-15 flashcards",
           },
           quiz: {
             type: "object",
@@ -94,7 +93,7 @@ const STUDY_PACK_TOOLS = [
               },
             },
             required: ["instructions", "questions"],
-            description: "15-20 quiz questions",
+            description: "10-15 quiz questions",
           },
         },
         required: ["meta", "summary", "notes", "key_terms", "flashcards", "quiz"],
@@ -137,25 +136,17 @@ Guidelines:
 - Create content that helps students understand and retain information
 - Include varied difficulty levels in quiz questions`;
 
-    const userPrompt = `Create a complete study pack from the following content:
+    // Truncate content to speed up processing (first 4000 chars should be enough)
+    const truncatedContent = contentToAnalyze.slice(0, 4000);
 
-GRADE: ${grade}
-SUBJECT: ${subject}
-CHAPTER TITLE: ${chapterTitle}
-LANGUAGE: ${language}
+    const userPrompt = `Create a study pack from this content. Be concise.
 
-CONTENT TO ANALYZE:
-${contentToAnalyze}
+GRADE: ${grade} | SUBJECT: ${subject} | TOPIC: ${chapterTitle} | LANGUAGE: ${language}
 
-Please generate:
-1. A concise TL;DR summary (2-3 sentences)
-2. 15-20 important points/key takeaways
-3. 8-12 detailed note sections with explanations
-4. 15-20 key terms with meanings and examples
-5. 15-20 flashcards for memorization
-6. 15-20 quiz questions (mix of easy, medium, hard)
+CONTENT:
+${truncatedContent}
 
-Make the content educational, engaging, and appropriate for the specified grade level.`;
+Generate: TL;DR (2 sentences), 10 key points, 6 notes, 12 terms, 12 flashcards, 10 quiz questions (easy/medium/hard mix).`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -164,7 +155,7 @@ Make the content educational, engaging, and appropriate for the specified grade 
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-2.5-flash-lite",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
