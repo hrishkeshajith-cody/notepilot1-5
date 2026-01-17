@@ -101,7 +101,7 @@ export function ChatBot({ context, onClearContext }: ChatBotProps) {
             <div className="p-4 border-b flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-primary" />
-                <span className="font-semibold">AI Study Assistant</span>
+                <span className="font-semibold">Notepilot AI</span>
               </div>
               <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>
                 <X className="w-4 h-4" />
