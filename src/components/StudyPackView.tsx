@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, FileText, Book, Layers, CheckCircle, ChevronLeft, ChevronRight, ChevronDown, Sparkles, Lightbulb } from 'lucide-react';
+import { ArrowLeft, FileText, Book, Layers, CheckCircle, ChevronLeft, ChevronRight, ChevronDown, Sparkles, Lightbulb, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StudyPack } from '@/types';
 import { Flashcard } from './Flashcard';
 import { Quiz } from './Quiz';
 
-type Tab = 'summary' | 'notes' | 'terms' | 'flashcards' | 'quiz';
+type Tab = 'summary' | 'notes' | 'terms' | 'flashcards' | 'quiz' | 'questions';
 
 interface StudyPackViewProps {
   pack: StudyPack;
@@ -20,13 +20,21 @@ export function StudyPackView({ pack, onBack, onAskAI }: StudyPackViewProps) {
   const [expandedNotes, setExpandedNotes] = useState<Record<number, boolean>>({});
   const [expandedTerms, setExpandedTerms] = useState<Record<number, boolean>>({});
 
+  const [expandedQuestions, setExpandedQuestions] = useState<Record<number, boolean>>({});
+  const [activeMarkFilter, setActiveMarkFilter] = useState<1 | 3 | 5 | 'all'>('all');
+
   const tabs: { id: Tab; label: string; icon: any }[] = [
     { id: 'summary', label: 'Summary', icon: Lightbulb },
     { id: 'notes', label: 'Notes', icon: FileText },
     { id: 'terms', label: 'Terms', icon: Book },
     { id: 'flashcards', label: 'Cards', icon: Layers },
     { id: 'quiz', label: 'Quiz', icon: CheckCircle },
+    { id: 'questions', label: 'Important Q', icon: HelpCircle },
   ];
+
+  const filteredQuestions = pack.important_questions?.filter(
+    q => activeMarkFilter === 'all' || q.marks === activeMarkFilter
+  ) || [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -135,6 +143,65 @@ export function StudyPackView({ pack, onBack, onAskAI }: StudyPackViewProps) {
           )}
 
           {activeTab === 'quiz' && <Quiz questions={pack.quiz.questions} onAskAI={onAskAI} />}
+
+          {activeTab === 'questions' && (
+            <div className="space-y-6">
+              <div className="flex gap-2 flex-wrap">
+                {(['all', 1, 3, 5] as const).map((mark) => (
+                  <Button
+                    key={mark}
+                    variant={activeMarkFilter === mark ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setActiveMarkFilter(mark)}
+                  >
+                    {mark === 'all' ? 'All Questions' : `${mark} Mark`}
+                  </Button>
+                ))}
+              </div>
+              
+              {filteredQuestions.length === 0 ? (
+                <div className="text-center text-muted-foreground py-8">
+                  No important questions available for this filter.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredQuestions.map((q, idx) => (
+                    <div key={idx} className="bg-card border rounded-xl overflow-hidden">
+                      <button
+                        onClick={() => setExpandedQuestions(p => ({ ...p, [idx]: !p[idx] }))}
+                        className="w-full flex items-start justify-between p-4 hover:bg-muted/50 text-left"
+                      >
+                        <div className="flex gap-3 flex-1">
+                          <span className={`px-2 py-1 rounded text-xs font-bold flex-shrink-0 ${
+                            q.marks === 1 ? 'bg-green-500/20 text-green-600' :
+                            q.marks === 3 ? 'bg-amber-500/20 text-amber-600' :
+                            'bg-red-500/20 text-red-600'
+                          }`}>
+                            {q.marks}M
+                          </span>
+                          <span className="font-medium">{q.question}</span>
+                        </div>
+                        <ChevronDown className={`w-5 h-5 transition-transform flex-shrink-0 ml-2 ${expandedQuestions[idx] ? 'rotate-180' : ''}`} />
+                      </button>
+                      {expandedQuestions[idx] && (
+                        <div className="px-4 pb-4 border-t bg-muted/30">
+                          <div className="pt-4">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-sm font-semibold text-primary">Model Answer:</span>
+                              <Button size="sm" variant="ghost" onClick={() => onAskAI(q.question + '\n\nAnswer: ' + q.answer)} className="ml-auto h-7">
+                                <Sparkles className="w-3 h-3 mr-1" /> Ask AI
+                              </Button>
+                            </div>
+                            <p className="text-muted-foreground whitespace-pre-wrap">{q.answer}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </motion.div>
       </main>
     </div>

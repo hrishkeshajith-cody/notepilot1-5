@@ -95,8 +95,21 @@ const STUDY_PACK_TOOLS = [
             required: ["instructions", "questions"],
             description: "10-15 quiz questions",
           },
+          important_questions: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                question: { type: "string", description: "An important exam question" },
+                answer: { type: "string", description: "Model answer for the question" },
+                marks: { type: "integer", enum: [1, 3, 5], description: "1, 3, or 5 marks" },
+              },
+              required: ["question", "answer", "marks"],
+            },
+            description: "9 important questions: 3 one-mark, 3 three-mark, 3 five-mark",
+          },
         },
-        required: ["meta", "summary", "notes", "key_terms", "flashcards", "quiz"],
+        required: ["meta", "summary", "notes", "key_terms", "flashcards", "quiz", "important_questions"],
         additionalProperties: false,
       },
     },
@@ -146,7 +159,7 @@ GRADE: ${grade} | SUBJECT: ${subject} | TOPIC: ${chapterTitle} | LANGUAGE: ${lan
 CONTENT:
 ${truncatedContent}
 
-Generate: TL;DR (2 sentences), 10 key points, 6 notes, 12 terms, 12 flashcards, 10 quiz questions (easy/medium/hard mix).`;
+Generate: TL;DR (2 sentences), 10 key points, 6 notes, 12 terms, 12 flashcards, 10 quiz questions (easy/medium/hard mix), and 9 important questions (3 one-mark short answer, 3 three-mark medium answer, 3 five-mark detailed answer).`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
